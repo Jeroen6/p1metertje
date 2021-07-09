@@ -35,7 +35,6 @@ void processPacket(uint8_t *data, size_t len){
 
     net_actual = net;
 
-    net_daily
 
     Serial.print("Time: ");
     Serial.println(time);
