@@ -1,7 +1,11 @@
 ## Usage
 
-Reset WiFi: plug in with DIP 4 ON, then turn DIP off and watch for SSID "P1 Metertje" to configure.
-(ip 192.168.4.1)
+Reset WiFi: 
+1. Unplug. 
+2. Set DIP 4 ON
+3. Plug in with DIP 4 ON
+4. Set DIP 4 OFF.
+5. Connect to SSID "P1 Metertje" to configure network. (ip 192.168.4.1)
 
 DIP3 sets needle to 0 for offset afjust.
 
