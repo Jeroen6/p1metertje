@@ -7,11 +7,20 @@
 #include <HTTPClient.h>
 #include <WiFiManager.h>          //https://github.com/tzapu/WiFiManager WiFi Configuration Magic
 
+#define DIP4 33
+#define DIP3 32
+#define DIP2 35
+#define DIP1 34
+
 // Settings */
 const int p1monitorBroadcastPort = 40721;
-#define RESETWIFI 13
+#define RESETWIFI   DIP4
 #define DAC1 25
 #define DAC2 26
+#define NEEDLE_TEST DIP3
+
+#define METER_KWH_MIN -50
+#define METER_KWH_MAX 50
 
 /* Broadcaster obtained values */
 volatile float net_actual = 0;
@@ -37,13 +46,36 @@ float energy_now_for_meter(const float meter,const float min, const float max);
 void p1runApiRequest();
 
 void setup() {
-    WiFi.mode(WIFI_STA); // explicitly set mode, esp defaults to STA+AP
     Serial.begin(115200);
+    pinMode(DIP1, INPUT_PULLDOWN);
+    pinMode(DIP2, INPUT_PULLDOWN);
+    pinMode(DIP3, INPUT_PULLDOWN);
+    pinMode(DIP4, INPUT_PULLDOWN);
+    
+    Serial.print("DIP 1 ");
+    if(digitalRead(DIP1)){
+      Serial.println("high");
+    }
+    Serial.print("DIP 2 ");
+    if(digitalRead(DIP2)){
+      Serial.println("high");
+    }
+    Serial.print("DIP 3 ");
+    if(digitalRead(DIP3)){
+      Serial.println("high");
+    }
+    Serial.print("DIP 4 ");
+    if(digitalRead(DIP4)){
+      Serial.println("high");
+    }
+    
+    WiFi.mode(WIFI_STA); // explicitly set mode, esp defaults to STA+AP
     //WiFiManager, Local intialization. Once its business is done, there is no need to keep it around
     WiFiManager wm;
     //reset settings if pin high during reset
     if(digitalRead(RESETWIFI)){
         wm.resetSettings();    
+        dacWrite(DAC1, 0);
     }
     // Automatically connect using saved credentials,
     // if connection fails, it starts an access point with the specified name ( "AutoConnectAP"),
@@ -79,10 +111,15 @@ void loop(){
     udac += random(-2,2);
     if(udac > 255)
       udac = 255;
-     if(udac < 0)
+    if(udac < 0)
       udac = 0;
-    dacWrite(DAC1, udac);
-    dacWrite(DAC2, udac);
+    if(digitalRead(NEEDLE_TEST)){
+      dacWrite(DAC1, 127);
+      dacWrite(DAC2, 127);
+    }else{
+      dacWrite(DAC1, udac);
+      dacWrite(DAC2, udac);
+    }
     delay(0.1);
 }
 
@@ -177,7 +214,7 @@ void p1runApiRequest(){
         variant = doc[10][1].as<JsonVariant>();
         daily_export_piek = variant.as<float>();
         daily_net = daily_import_dal + daily_import_piek + -daily_export_dal + -daily_export_piek;
-        daily_net_meter = energy_now_for_meter(daily_net,-1.5,1.5);
+        daily_net_meter = energy_now_for_meter(daily_net,METER_KWH_MIN,METER_KWH_MAX);
         Serial.print("daily_import_dal: ");
         Serial.println(daily_import_dal);
         Serial.print("daily_import_piek: ");
